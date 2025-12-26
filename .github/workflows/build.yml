@@ -4,6 +4,13 @@ on:
     tags:
       - "v*"
   workflow_dispatch:
+    inputs:
+      version:
+        description: Release version (e.g. v1.0.0)
+        required: true
+
+env:
+  PLUGIN_VERSION: ${{ github.event.inputs.version || github.ref_name }}
 
 jobs:
   build:
@@ -83,10 +90,10 @@ jobs:
       - name: Zip plugin artifact
         run: |
           mkdir -p release
-          zip -r release/vndb-plugin-${{ github.ref_name }}.zip plugin
+          zip -r release/vndb-plugin-${{ env.PLUGIN_VERSION }}.zip plugin
 
       # 3. Create GitHub Release.
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: release/vndb-plugin-${{ github.ref_name }}.zip
+          files: release/vndb-plugin-${{ env.PLUGIN_VERSION }}.zip
