@@ -1,0 +1,35 @@
+name: Plugin Build Workflow
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        node-version: [20]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "pnpm"
+      - name: Install dependencies
+        run: pnpm install
+      - name: Build plugin
+        run: pnpm build
+      - name: Zip build artifacts
+        run: |
+          mkdir -p release
+          zip -r release/vndb-plugin-${{ github.ref_name }}.zip dist
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release/vndb-plugin-${{ github.ref_name }}.zip
