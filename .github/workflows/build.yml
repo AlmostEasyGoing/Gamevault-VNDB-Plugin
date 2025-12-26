@@ -50,6 +50,7 @@ jobs:
 
       # 6. Install dependencies.
       - name: Install dependencies
+        working-directory: gamevault-backend
         run: pnpm install
 
       # 7. Build backend + plugin.
