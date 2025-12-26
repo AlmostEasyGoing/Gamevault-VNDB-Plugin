@@ -3,32 +3,88 @@ on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
 
 jobs:
   build:
+    name: Build Plugin
     runs-on: ubuntu-22.04
+
     strategy:
       matrix:
         node-version: [20]
+
     steps:
-      - uses: actions/checkout@v4
+      # 1. Checkout my plugin repo.
+      - name: Checkout plugin
+        uses: actions/checkout@v4
+        with:
+          path: vndb-plugin
+
+      # 2. Checkout GameVault backend repo.
+      - name: Checkout GameVault backend
+        uses: actions/checkout@v4
+        with:
+          repository: Phalcode/gamevault-backend
+          path: gamevault-backend
+
+      # 3. Copy plugin into backend plugins folder.
+      - name: Copy plugin into backend
+        run: |
+          mkdir -p gamevault-backend/.local/plugins
+          cp -r vndb-plugin gamevault-backend/.local/plugins/vndb-plugin
+
+      # 4. Install pnpm.
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
           version: 10
-      - name: Use Node.js ${{ matrix.node-version }}
+
+      # 5. Setup Node + pnpm cache.
+      - name: Setup Node ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
           cache: "pnpm"
+          cache-dependency-path: gamevault-backend/pnpm-lock.yaml
+
+      # 6. Install dependencies.
       - name: Install dependencies
         run: pnpm install
+
+      # 7. Build backend + plugin.
       - name: Build plugin
+        working-directory: gamevault-backend
         run: pnpm build
-      - name: Zip build artifacts
+
+      # 8. Upload artifacts.
+      - name: Upload plugin artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: built-plugin
+          path: gamevault-backend/dist/.local/plugins/vndb-plugin
+
+  release:
+    name: Publish Plugin
+    needs: build
+    runs-on: ubuntu-22.04
+    if: startsWith(github.ref, 'refs/tags/')
+
+    steps:
+      # 1. Download artifacts.
+      - name: Download plugin artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: built-plugin
+          path: plugin
+
+      # 2. Zip built plugin.
+      - name: Zip plugin artifact
         run: |
           mkdir -p release
-          zip -r release/vndb-plugin-${{ github.ref_name }}.zip dist
+          zip -r release/vndb-plugin-${{ github.ref_name }}.zip plugin
+
+      # 3. Create GitHub Release.
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
