@@ -14,7 +14,7 @@ implementation (with some limitations and quirks)
 ## License
 This project is licensed under the MIT License. See the LICENSE file for details. \
 Do note that this licensing is valid **only for the plugin code**. \
-All other code stems from the GameVault project and is thus licensed via their license (Attribution-NonCommercial-ShareAlike 4.0 International) instead.
+All other code stems from the GameVault project and is thus licensed via their [license](https://github.com/Phalcode/gamevault-backend/blob/master/LICENSE) instead.
 
 ## Acknowledgements
 - [Phalcode](https://github.com/Phalcode) with their GameVault project
