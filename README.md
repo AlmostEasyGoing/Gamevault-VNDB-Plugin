@@ -1,7 +1,8 @@
 # GameVault VNDB Plugin
 
 ## Description
-A metadata provider plugin for GameVault using VNDB.
+A metadata provider plugin for GameVault using [VNDB](https://vndb.org). \
+The plugin partially implements the [VNDB API v2 (Kana)](https://api.vndb.org/kana) to query Visual Novels.
 
 ## Getting Started
 The plugin installation process is explained in the [GameVault Docs](https://gamevau.lt/docs/server-docs/plugins).
