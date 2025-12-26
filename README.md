@@ -12,7 +12,7 @@ The latest release can be found [here](https://github.com/AlmostEasyGoing/gameva
 implementation (with some limitations and quirks)
 
 ## License
-This project is licensed under the MIT License - see the LICENSE file for details. \
+This project is licensed under the MIT License. See the LICENSE file for details. \
 Do note that this licensing is valid **only for the plugin code**. \
 All other code stems from the GameVault project and is thus licensed via their license (Attribution-NonCommercial-ShareAlike 4.0 International) instead.
 
