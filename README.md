@@ -8,7 +8,7 @@ The plugin installation process is explained in the [GameVault Docs](https://gam
 The latest release can be found [here](https://github.com/AlmostEasyGoing/gamevault-vndb-plugin/releases/latest).
 
 ## Similar Projects
-- [GameVault VNDB Plugin](https://github.com/nosyrbllewe/Gamevault-VNDB-Plugin) which uses a more simplified
+- [nosyrbllewe/Gamevault-VNDB-Plugin](https://github.com/nosyrbllewe/Gamevault-VNDB-Plugin) which uses a more simplified
 implementation (with some limitations and quirks)
 
 ## License
