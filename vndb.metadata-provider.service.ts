@@ -5,6 +5,7 @@ import { GameMetadata } from "../../../src/modules/metadata/games/game.metadata.
 import { GenreMetadata } from "../../../src/modules/metadata/genres/genre.metadata.entity";
 import { TagMetadata } from "../../../src/modules/metadata/tags/tag.metadata.entity";
 import { VNDBClient } from "./client";
+import { VNDBQuery } from "./models";
 import type { VisualNovel, VisualNovelRelease } from "./models";
 import configuration from "./configuration";
 
@@ -20,8 +21,14 @@ export class VNDBMetadataProviderService extends MetadataProvider {
     query: string
   ): Promise<MinimalGameMetadataDto[]> {
     const client = this.getClient();
-    const games = await client.searchVisualNovels(query);
-    return games.map(game => this.mapMinimalGameMetadata(game));
+    const games = await client.searchVisualNovels(query, 50);
+    if (games.more) {
+      this.logger.warn(
+        "Too many Visual Novels fit the search criteria. " +
+        `Only showing the first ${games.items.length} entries.`
+      )
+    }
+    return games.items.map(game => this.mapMinimalGameMetadata(game));
   }
 
   public override async getByProviderDataIdOrFail(
@@ -29,8 +36,14 @@ export class VNDBMetadataProviderService extends MetadataProvider {
   ): Promise<GameMetadata> {
     const client = this.getClient();
     const game = await client.getVisualNovel(provider_data_id);
-    const releases = await client.getVisualNovelReleases(provider_data_id);
-    return this.mapGameMetadata(game, releases);
+    const releases = await client.getVisualNovelReleases(provider_data_id, 100);
+    if (releases.more) {
+      this.logger.warn(
+        `Too many Releases belong to the Visual Novel with ID ${game.id}. ` +
+        `Only taking the first ${releases.items.length} entries into consideration.`
+      )
+    }
+    return this.mapGameMetadata(game, releases.items);
   }
 
   private async mapGameMetadata(
@@ -137,6 +150,8 @@ export class VNDBMetadataProviderService extends MetadataProvider {
   }
 
   private getClient(): VNDBClient {
-    return new VNDBClient();
+    return new VNDBClient({
+      delay: configuration.REQUEST_INTERVAL_MS
+    });
   }
 }

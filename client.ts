@@ -8,14 +8,9 @@ import {
   VisualNovelFields,
   type VisualNovelRelease,
   VisualNovelReleaseFields,
-  type VNDBQueryResult
+  type VNDBQueryResult,
+  type VNDBQueryResultRaw
 } from "./models";
-import configuration from "./configuration";
-
-enum VNDBRoute {
-  VN      = "vn",
-  RELEASE = "release"
-}
 
 /**
  * API Client to query VNDB API v2 (Kana) as RESTful API.
@@ -26,6 +21,14 @@ enum VNDBRoute {
 export class VNDBClient {
   public static readonly HOME = "https://vndb.org/";
   public static readonly ENDPOINT = "https://api.vndb.org/kana/";
+
+  private settings: VNDBSettings;
+
+  constructor(
+    settings: VNDBSettings = { delay: 700 }
+  ) {
+    this.settings = settings;
+  }
 
   public static makeBrowserURL(
     id: ID
@@ -39,7 +42,52 @@ export class VNDBClient {
     return VNDBClient.ENDPOINT + route;
   }
 
+  public static calcPageCount(
+    itemCount: number
+  ) {
+    return Math.ceil(itemCount / VNDBQuery.MAXRESULTS);
+  }
+
   public async request(
+    route: VNDBRoute,
+    query: VNDBQuery,
+    pageCount: number = 1
+  ): Promise<Paged<VNDBQueryResultRaw>> {
+    let more = false;
+    let page = query.page;
+    let pageTo = query.page + pageCount;
+    let finished = false;
+    let results: Record<string, any>[] = [];
+
+    while (!finished) {
+      // Make new query for next page.
+      const pageQuery = query.clone();
+      pageQuery.page = page;
+
+      // Perform the query and extract results.
+      const result = await this.requestAPI(route, pageQuery);
+      more = result.more;
+      results = results.concat(result.results);
+
+      // Check termination criteria.
+      page++;
+      finished = !more || page > pageTo;
+
+      // Sleep between paged requests.
+      if (!finished) {
+        await new Promise(r => setTimeout(r, this.settings.delay));
+      }
+    }
+
+    return {
+      more: more,
+      pageFrom: query.page,
+      pageTo: pageTo,
+      items: results
+    };
+  }
+
+  public async requestAPI(
     route: VNDBRoute,
     query: VNDBQuery
   ): Promise<VNDBQueryResult> {
@@ -53,40 +101,6 @@ export class VNDBClient {
     return response.json();
   }
 
-  public async requestAll(
-    route: VNDBRoute,
-    query: VNDBQuery,
-    pageLimit: number = 3
-  ): Promise<VNDBQueryResult> {
-    let page = 1;
-    let finished = false;
-    let results: Record<string, any>[] = [];
-    while (!finished) {
-      const pageQuery = query.clone();
-      pageQuery.page = page;
-      const result = await this.request(route, pageQuery);
-      results = results.concat(result.results);
-      page++;
-      finished = !result.more || page > pageLimit;
-      if (!finished) {
-        // Sleep between paged requests.
-        await new Promise(r => setTimeout(r, configuration.REQUEST_INTERVAL_MS));
-      }
-    }
-    return {
-      more: false,
-      results: results
-    };
-  }
-
-  public async getChildTags(
-    id: ID
-  ): Promise<Tag[]> {
-    throw new NotImplementedException(
-      "VNDB does not currently support fetching child tags."
-    )
-  }
-
   public async getVisualNovel(
     id: ID
   ): Promise<VisualNovel> {
@@ -97,35 +111,69 @@ export class VNDBClient {
     });
     const result = await this.request(VNDBRoute.VN, query);
 
-    if (result.results.length === 0) {
+    if (result.items.length === 0) {
       throw new NotFoundException(
         `VisualNovel with id ${id} not found on VNDB.`
       );
     }
-    return result.results[0] as VisualNovel;
-  }
-
-  public async searchVisualNovels(
-    search: string
-  ): Promise<VisualNovel[]> {
-    const query = new VNDBQuery({
-      filters: ["search", "=", search],
-      fields: VisualNovelFields,
-      results: VNDBQuery.MAXRESULTS
-    });
-    const result = await this.requestAll(VNDBRoute.VN, query);
-    return result.results as VisualNovel[];
+    return result.items[0] as VisualNovel;
   }
 
   public async getVisualNovelReleases(
-    id: ID
-  ): Promise<VisualNovelRelease[]> {
+    id: ID,
+    itemLimit: number
+  ): Promise<Paged<VisualNovelRelease>> {
     const query = new VNDBQuery({
       filters: ["vn", "=", ["id", "=", id]],
       fields: VisualNovelReleaseFields,
       results: VNDBQuery.MAXRESULTS
     });
-    const result = await this.requestAll(VNDBRoute.RELEASE, query);
-    return result.results as VisualNovelRelease[];
+    const result = await this.request(VNDBRoute.RELEASE, query, VNDBClient.calcPageCount(itemLimit));
+    return {
+      ...result,
+      items: result.items.slice(0, itemLimit) as VisualNovelRelease[]
+    }
   }
+
+  public async searchVisualNovels(
+    search: string,
+    itemLimit: number
+  ): Promise<Paged<VisualNovel>> {
+    const query = new VNDBQuery({
+      filters: ["search", "=", search],
+      fields: VisualNovelFields,
+      results: VNDBQuery.MAXRESULTS
+    });
+    const result = await this.request(VNDBRoute.VN, query, VNDBClient.calcPageCount(itemLimit));
+    return {
+      ...result,
+      items: result.items.slice(0, itemLimit) as VisualNovel[]
+    }
+  }
+
+  public async getChildTags(
+    id: ID,
+    itemLimit: number
+  ): Promise<Paged<Tag>> {
+    throw new NotImplementedException(
+      "VNDB does not currently support fetching child tags."
+    )
+  }
+}
+
+interface Paged<T> {
+  more: boolean;
+  pageFrom: number;
+  pageTo: number;
+  items: T[];
+}
+
+enum VNDBRoute {
+  VN      = "vn",
+  RELEASE = "release"
+}
+
+export interface VNDBSettings {
+  // Delay in ms between paged requests.
+  delay: number;
 }

@@ -73,7 +73,9 @@ type VNDBQueryFilterOperator = "=" | "!=" | ">" | ">=" | "<" | "<=";
 
 type VNDBQueryFilterValue = string | null;
 
+export type VNDBQueryResultRaw = Record<string, any>
+
 export type VNDBQueryResult = {
-  results: Record<string, any>[];
+  results: VNDBQueryResultRaw[];
   more: boolean;
 };
