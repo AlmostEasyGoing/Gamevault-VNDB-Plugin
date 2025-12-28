@@ -5,7 +5,6 @@ import { GameMetadata } from "../../../src/modules/metadata/games/game.metadata.
 import { GenreMetadata } from "../../../src/modules/metadata/genres/genre.metadata.entity";
 import { TagMetadata } from "../../../src/modules/metadata/tags/tag.metadata.entity";
 import { VNDBClient } from "./client";
-import { VNDBQuery } from "./models";
 import type { VisualNovel, VisualNovelRelease } from "./models";
 import configuration from "./configuration";
 

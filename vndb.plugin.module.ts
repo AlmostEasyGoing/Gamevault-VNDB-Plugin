@@ -15,11 +15,10 @@ export default class VNDBPluginModule implements GameVaultPluginModule {
   metadata: GameVaultPluginModuleMetadataV1 = {
     name: "VNDB Metadata Provider",
     author: "AlmostEasyGoing",
-    version: "1.0.1",
+    version: "1.0.2",
     description:
       "A plugin to provide metadata using VNDB (The Visual Novel Database).",
     keywords: ["vndb", "visual", "novel", "visual novel", "vn", "metadata"],
-    license: "MIT",
-    website: "https://gamevau.lt",
+    license: "MIT"
   };
 }

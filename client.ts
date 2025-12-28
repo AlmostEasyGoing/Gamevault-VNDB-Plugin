@@ -57,7 +57,7 @@ export class VNDBClient {
     let page = query.page;
     let pageTo = query.page + pageCount;
     let finished = false;
-    let results: Record<string, any>[] = [];
+    let results: VNDBQueryResultRaw[] = [];
 
     while (!finished) {
       // Make new query for next page.
