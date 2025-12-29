@@ -55,7 +55,7 @@ export class VNDBClient {
   ): Promise<Paged<VNDBQueryResultRaw>> {
     let more = false;
     let page = query.page;
-    let pageTo = query.page + pageCount;
+    let pageTo = query.page + pageCount - 1;
     let finished = false;
     let results: VNDBQueryResultRaw[] = [];
 
