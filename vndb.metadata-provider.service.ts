@@ -67,7 +67,8 @@ export class VNDBMetadataProviderService extends MetadataProvider {
       provider_data_id: game.id,
       provider_data_url: VNDBClient.makeBrowserURL(game.id),
       url_screenshots: game.screenshots.map(image => image.url),
-      url_websites: game.extlinks.map(link => link.url),
+      url_websites: [VNDBClient.makeBrowserURL(game.id)]
+        .concat(game.extlinks.map(link => link.url)),
       // E.g. Genres on VNDB count as tags too.
       // No filtering is done here, which shouldn't be too bad.
       tags: game.tags.map(tag => ({
