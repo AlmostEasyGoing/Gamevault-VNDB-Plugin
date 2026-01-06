@@ -54,11 +54,6 @@ const configuration = {
   // An empty list means no filtering is done (all languages included).
   LANGUAGES: parseList(process.env.PLUGIN_ALMOSTEASYGOING_VNDB_LANGUAGES),
   // Whether to include unofficial releases (e.g. machine TL) for vns or not.
-  INCLUDE_UNOFFICIAL_RELEASES: parseBooleanEnvVariable(process.env.PLUGIN_ALMOSTEASYGOING_VNDB_INCLUDE_UNOFFICIAL_RELEASES, true),
-  // Pattern to use for e.g. extracting the ID from the title.
-  // Must contain at least a named capture group 'id'.
-  TITLE_PARSE_PATTERN: process.env.PLUGIN_ALMOSTEASYGOING_VNDB_TITLE_PARSE_PATTERN
-    ? RegExp(process.env.PLUGIN_ALMOSTEASYGOING_VNDB_TITLE_PARSE_PATTERN)
-    : undefined
+  INCLUDE_UNOFFICIAL_RELEASES: parseBooleanEnvVariable(process.env.PLUGIN_ALMOSTEASYGOING_VNDB_INCLUDE_UNOFFICIAL_RELEASES, true)
 }
 export default configuration;
