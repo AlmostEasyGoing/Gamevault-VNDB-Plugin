@@ -35,7 +35,9 @@ export class VNDBMetadataProviderService extends MetadataProvider {
   ): Promise<GameMetadata> {
     const client = this.getClient();
     const game = await client.getVisualNovel(provider_data_id);
-    const releases = await client.getVisualNovelReleases(provider_data_id, 100);
+    const releases = await client.getVisualNovelReleases(
+      provider_data_id, 100, configuration.INCLUDE_UNOFFICIAL_RELEASES
+    );
     if (releases.more) {
       this.logger.warn(
         `Too many Releases belong to the Visual Novel with ID ${game.id}. ` +

@@ -52,6 +52,8 @@ const configuration = {
   // Languages (two letter language codes, see https://en.wikipedia.org/wiki/List_of_ISO_639_language_codes).
   // Used for filtering and ordering vns and releases. Does NOT affect the title.
   // An empty list means no filtering is done (all languages included).
-  LANGUAGES: parseList(process.env.PLUGIN_ALMOSTEASYGOING_VNDB_LANGUAGES)
+  LANGUAGES: parseList(process.env.PLUGIN_ALMOSTEASYGOING_VNDB_LANGUAGES),
+  // Whether to include unofficial releases (e.g. machine TL) for vns or not.
+  INCLUDE_UNOFFICIAL_RELEASES: parseBooleanEnvVariable(process.env.PLUGIN_ALMOSTEASYGOING_VNDB_INCLUDE_UNOFFICIAL_RELEASES, true)
 }
 export default configuration;

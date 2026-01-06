@@ -144,10 +144,15 @@ export class VNDBClient {
 
   public async getVisualNovelReleases(
     id: ID,
-    itemLimit: number
+    itemLimit: number,
+    includeUnofficial: boolean = true
   ): Promise<Paged<VisualNovelRelease>> {
+    let builder = new VNDBQueryFilterBuilder(["vn", "=", ["id", "=", id]]);
+    if (!includeUnofficial) {
+      builder = builder.reduce("and", [["official", "=", true]]);
+    }
     const query = new VNDBQuery({
-      filters: new VNDBQueryFilterBuilder(["vn", "=", ["id", "=", id]])
+      filters: builder
         .reduce("and", [this.makeLangFilter()])
         .get(),
       fields: VisualNovelReleaseFields,
