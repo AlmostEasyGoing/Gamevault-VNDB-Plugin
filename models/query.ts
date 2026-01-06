@@ -109,7 +109,7 @@ type VNDBQueryFilterField = string;
 
 type VNDBQueryFilterOperator = "=" | "!=" | ">" | ">=" | "<" | "<=";
 
-type VNDBQueryFilterValue = string | null;
+type VNDBQueryFilterValue = string | number | boolean | null;
 
 export type VNDBQueryResultRaw = Record<string, any>
 
