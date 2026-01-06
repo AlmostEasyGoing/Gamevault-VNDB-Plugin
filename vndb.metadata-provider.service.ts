@@ -61,6 +61,15 @@ export class VNDBMetadataProviderService extends MetadataProvider {
           .map(producer => [producer.id, producer])
       ).values()
     ];
+    // Sort producers by languages.
+    producers.sort((p, o) => {
+      const langDiff =
+        configuration.LANGUAGES.indexOf(p.lang) -
+        configuration.LANGUAGES.indexOf(o.lang);
+      return langDiff !== 0
+        ? langDiff
+        : p.lang.localeCompare(o.lang);
+    });
     let metadata = {
       title: game.title,
       provider_slug: this.slug,
@@ -151,7 +160,8 @@ export class VNDBMetadataProviderService extends MetadataProvider {
 
   private getClient(): VNDBClient {
     return new VNDBClient({
-      delay: configuration.REQUEST_INTERVAL_MS
+      delay: configuration.REQUEST_INTERVAL_MS,
+      languages: configuration.LANGUAGES
     });
   }
 }

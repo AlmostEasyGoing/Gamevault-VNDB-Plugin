@@ -2,6 +2,9 @@ import { NotFoundException, NotImplementedException } from "@nestjs/common";
 import {
   type ID,
   VNDBQuery,
+  type VNDBQueryFilter,
+  type VNDBQueryFilterNormal,
+  VNDBQueryFilterBuilder,
   type Tag,
   TagFields,
   type VisualNovel,
@@ -25,7 +28,10 @@ export class VNDBClient {
   private settings: VNDBSettings;
 
   constructor(
-    settings: VNDBSettings = { delay: 700 }
+    settings: VNDBSettings = {
+      delay: 700,
+      languages: []
+    }
   ) {
     this.settings = settings;
   }
@@ -44,7 +50,7 @@ export class VNDBClient {
 
   public static calcPageCount(
     itemCount: number
-  ) {
+  ): number {
     return Math.ceil(itemCount / VNDBQuery.MAXRESULTS);
   }
 
@@ -101,11 +107,28 @@ export class VNDBClient {
     return response.json();
   }
 
+  private makeLangFilter(
+    langField: string = "lang"
+  ): VNDBQueryFilter {
+    let builder = new VNDBQueryFilterBuilder();
+    if (this.settings.languages) {
+      builder = builder.reduce(
+        "or",
+        this.settings.languages.map(
+          lang => [langField, "=", lang] as VNDBQueryFilterNormal
+        )
+      );
+    }
+    return builder.get();
+  }
+
   public async getVisualNovel(
     id: ID
   ): Promise<VisualNovel> {
     const query = new VNDBQuery({
-      filters: ["id", "=", id],
+      filters: new VNDBQueryFilterBuilder(["id", "=", id])
+        .reduce("and", [this.makeLangFilter()])
+        .get(),
       fields: VisualNovelFields,
       results: 1
     });
@@ -124,7 +147,9 @@ export class VNDBClient {
     itemLimit: number
   ): Promise<Paged<VisualNovelRelease>> {
     const query = new VNDBQuery({
-      filters: ["vn", "=", ["id", "=", id]],
+      filters: new VNDBQueryFilterBuilder(["vn", "=", ["id", "=", id]])
+        .reduce("and", [this.makeLangFilter()])
+        .get(),
       fields: VisualNovelReleaseFields,
       results: VNDBQuery.MAXRESULTS
     });
@@ -140,9 +165,12 @@ export class VNDBClient {
     itemLimit: number
   ): Promise<Paged<VisualNovel>> {
     const query = new VNDBQuery({
-      filters: ["search", "=", search],
+      filters: new VNDBQueryFilterBuilder(["search", "=", search])
+        .reduce("and", [this.makeLangFilter()])
+        .get(),
       fields: VisualNovelFields,
-      results: VNDBQuery.MAXRESULTS
+      results: VNDBQuery.MAXRESULTS,
+      sort: "searchrank"
     });
     const result = await this.request(VNDBRoute.VN, query, VNDBClient.calcPageCount(itemLimit));
     return {
@@ -176,4 +204,5 @@ enum VNDBRoute {
 export interface VNDBSettings {
   // Delay in ms between paged requests.
   delay: number;
+  languages: string[];
 }

@@ -1,5 +1,6 @@
 import {
   IsInt,
+  IsArray,
   IsBoolean,
   IsNotEmpty,
   Min,
@@ -53,16 +54,53 @@ export class VNDBQuery {
   }
 }
 
-type VNDBQueryFilter = []
-  | VNDBQueryFilterPredicate
-  | [VNDBQueryFilterReductor, ...VNDBQueryFilterPredicate[]];
+export class VNDBQueryFilterBuilder {
+  constructor(
+    value: VNDBQueryFilter = []
+  ) {
+    this.value = value;
+  }
 
-type VNDBQueryField = string;
+  @IsArray()
+  private value: VNDBQueryFilter;
+
+  public reduce(
+    op: VNDBQueryFilterReductor,
+    filters: VNDBQueryFilter[]
+  ): VNDBQueryFilterBuilder {
+    let allFilters = [this.value].concat(filters)
+      .filter(filter => isVNDBQueryFilterNormal(filter));
+    return new VNDBQueryFilterBuilder(
+      allFilters.length > 1
+        ? [op, allFilters[0], ...allFilters.slice(1)]
+        : allFilters.length === 1
+          ? allFilters[0]
+          : []
+    );
+  }
+
+  public get(): VNDBQueryFilter {
+    return this.value;
+  }
+}
+
+export type VNDBQueryFilter = [] | VNDBQueryFilterNormal;
+
+export type VNDBQueryFilterNormal = VNDBQueryFilterPredicate
+  | [VNDBQueryFilterReductor, VNDBQueryFilterNormal, ...VNDBQueryFilterNormal[]];
+
+export function isVNDBQueryFilterNormal(
+  filter: VNDBQueryFilter
+): filter is VNDBQueryFilterNormal {
+  return filter.length > 0;
+}
+
+export type VNDBQueryField = string;
 
 type VNDBQueryFilterPredicate = [
   VNDBQueryFilterField,
   VNDBQueryFilterOperator,
-  VNDBQueryFilterValue | VNDBQueryFilter
+  VNDBQueryFilterValue | VNDBQueryFilterNormal
 ];
 
 type VNDBQueryFilterReductor = "or" | "and";
