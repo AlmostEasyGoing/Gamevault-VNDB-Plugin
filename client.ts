@@ -194,7 +194,7 @@ export class VNDBClient {
   }
 }
 
-interface Paged<T> {
+export interface Paged<T> {
   more: boolean;
   pageFrom: number;
   pageTo: number;

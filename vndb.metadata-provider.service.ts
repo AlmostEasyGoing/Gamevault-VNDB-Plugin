@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, NotFoundException } from "@nestjs/common";
 import { MetadataProvider } from "../../../src/modules/metadata/providers/abstract.metadata-provider.service";
 import { MinimalGameMetadataDto } from "../../../src/modules/metadata/games/minimal-game.metadata.dto";
 import { GameMetadata } from "../../../src/modules/metadata/games/game.metadata.entity";
@@ -10,7 +10,7 @@ import configuration from "./configuration";
 
 @Injectable()
 export class VNDBMetadataProviderService extends MetadataProvider {
-  enabled = configuration.ENABLED
+  enabled = configuration.ENABLED;
   request_interval_ms = configuration.REQUEST_INTERVAL_MS;
   readonly slug = "vndb";
   readonly name = "VNDB";
@@ -20,14 +20,42 @@ export class VNDBMetadataProviderService extends MetadataProvider {
     query: string
   ): Promise<MinimalGameMetadataDto[]> {
     const client = this.getClient();
-    const games = await client.searchVisualNovels(query, 50);
-    if (games.more) {
-      this.logger.warn(
-        "Too many Visual Novels fit the search criteria. " +
-        `Only showing the first ${games.items.length} entries.`
-      )
+    let games: VisualNovel[] = [];
+    if (configuration.TITLE_PARSE_PATTERN) {
+      const match = query.match(configuration.TITLE_PARSE_PATTERN);
+      if (match) {
+        const { id } = match.groups;
+        this.logger.debug(
+          "Found match on Visual Novel using title pattern. " +
+          `Got id=${id} from capture groups.`
+        );
+        try {
+          games = [await client.getVisualNovel(id)];
+        } catch (e) {
+          if (e instanceof NotFoundException) {
+            this.logger.warn(e.message);
+          } else {
+            throw e;
+          }
+        }
+      } else {
+        this.logger.warn(
+          `No match found on ${query} for pattern '${configuration.TITLE_PARSE_PATTERN}'. ` +
+          "Falling back to normal query-based search."
+        );
+      }
     }
-    return games.items.map(game => this.mapMinimalGameMetadata(game));
+    if (games.length === 0) {
+      const result = await client.searchVisualNovels(query, 50);
+      if (result.more) {
+        this.logger.warn(
+          "Too many Visual Novels fit the search criteria. " +
+          `Only showing the first ${result.items.length} entries.`
+        );
+      }
+      games = result.items;
+    }
+    return games.map(game => this.mapMinimalGameMetadata(game));
   }
 
   public override async getByProviderDataIdOrFail(
@@ -42,7 +70,7 @@ export class VNDBMetadataProviderService extends MetadataProvider {
       this.logger.warn(
         `Too many Releases belong to the Visual Novel with ID ${game.id}. ` +
         `Only taking the first ${releases.items.length} entries into consideration.`
-      )
+      );
     }
     return this.mapGameMetadata(game, releases.items);
   }
