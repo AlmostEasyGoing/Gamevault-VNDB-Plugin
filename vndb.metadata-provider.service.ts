@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, NotFoundException } from "@nestjs/common";
 import { MetadataProvider } from "../../../src/modules/metadata/providers/abstract.metadata-provider.service";
 import { MinimalGameMetadataDto } from "../../../src/modules/metadata/games/minimal-game.metadata.dto";
 import { GameMetadata } from "../../../src/modules/metadata/games/game.metadata.entity";
@@ -7,10 +7,11 @@ import { TagMetadata } from "../../../src/modules/metadata/tags/tag.metadata.ent
 import { VNDBClient } from "./client";
 import type { VisualNovel, VisualNovelRelease } from "./models";
 import configuration from "./configuration";
+import { GamevaultGame } from "src/modules/games/gamevault-game.entity";
 
 @Injectable()
 export class VNDBMetadataProviderService extends MetadataProvider {
-  enabled = configuration.ENABLED
+  enabled = configuration.ENABLED;
   request_interval_ms = configuration.REQUEST_INTERVAL_MS;
   readonly slug = "vndb";
   readonly name = "VNDB";
@@ -25,7 +26,7 @@ export class VNDBMetadataProviderService extends MetadataProvider {
       this.logger.warn(
         "Too many Visual Novels fit the search criteria. " +
         `Only showing the first ${games.items.length} entries.`
-      )
+      );
     }
     return games.items.map(game => this.mapMinimalGameMetadata(game));
   }
@@ -42,9 +43,44 @@ export class VNDBMetadataProviderService extends MetadataProvider {
       this.logger.warn(
         `Too many Releases belong to the Visual Novel with ID ${game.id}. ` +
         `Only taking the first ${releases.items.length} entries into consideration.`
-      )
+      );
     }
     return this.mapGameMetadata(game, releases.items);
+  }
+
+  // Overriding this to allow for title regex matching.
+  public override async getBestMatch(
+    game: GamevaultGame
+  ): Promise<MinimalGameMetadataDto> {
+    let result: MinimalGameMetadataDto;
+    const client = this.getClient();
+    const titleRegex = new RegExp(/\[vndbid-(?<id>\d+)\]/);
+    const titleMatch = game.title.match(titleRegex);
+    if (titleMatch) {
+      const { id } = titleMatch.groups;
+      this.logger.debug(
+        `Got ID ${id} from game titled ${game.title}. ` +
+        `Attempting to use ID based search.`
+      );
+      try {
+        result = this.mapMinimalGameMetadata(
+          await client.getVisualNovel(id)
+        );
+      } catch (e) {
+        if (e instanceof NotFoundException) {
+          this.logger.warn(
+            `Unable to use ID based search: '${e.message}'. ` +
+            `Falling back to the default implementation.`
+          );
+        } else {
+          throw e;
+        }
+      }
+    }
+    // Could alternatively use API search results as is and
+    // not use super.getBestMatch here, as the API search also checks
+    // for title aliases and thus may be better for matching in practice.
+    return result || await super.getBestMatch(game);
   }
 
   private async mapGameMetadata(
@@ -54,7 +90,7 @@ export class VNDBMetadataProviderService extends MetadataProvider {
     // Collect age ratings of releases.
     const ages = releases
       .map(release => release.minage)
-      .filter(age => age !== null)
+      .filter(age => age !== null);
     // Collect deduplicated release producers.
     const producers = [
       ...new Map(
