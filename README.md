@@ -8,6 +8,8 @@ The plugin partially implements the [VNDB API v2 (Kana)](https://api.vndb.org/ka
 The plugin installation process is explained in the [GameVault Docs](https://gamevau.lt/docs/server-docs/plugins).
 The latest release can be found [here](https://github.com/AlmostEasyGoing/gamevault-vndb-plugin/releases/latest).
 
+> **ESM compatibility (GameVault v17.0.1+):** The GameVault backend is now ESM (NodeNext). Plugins must be compiled as ESM with explicit `.js` extensions on relative imports and `import type` for type-only imports. This plugin already follows that structure and is built together with the backend (`pnpm build`), producing a `vndb.plugin.module.js` entry.
+
 ## Similar Projects
 - [nosyrbllewe/Gamevault-VNDB-Plugin](https://github.com/nosyrbllewe/Gamevault-VNDB-Plugin) which uses a simpler
 implementation (with some limitations and quirks)

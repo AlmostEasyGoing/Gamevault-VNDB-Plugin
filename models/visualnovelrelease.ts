@@ -1,5 +1,5 @@
-import { type ID, extendFields } from "./common";
-import { type Producer, ProducerFields } from "./producer";
+import { type ID, extendFields } from "./common.js";
+import { type Producer, ProducerFields } from "./producer.js";
 
 export interface ReleaseLanguage {
   lang: string;

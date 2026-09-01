@@ -1,4 +1,4 @@
-import { ID } from "./common";
+import type { ID } from "./common.js";
 
 // Company, Individual or Amateur Group.
 type ProducerType = "co" | "in" | "ng";

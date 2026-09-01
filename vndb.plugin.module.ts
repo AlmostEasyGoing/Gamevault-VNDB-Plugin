@@ -1,11 +1,11 @@
 import { Module } from "@nestjs/common";
 import {
-  GameVaultPluginModule,
-  GameVaultPluginModuleMetadataV1,
-} from "../../../src/globals";
-import { MetadataModule } from "src/modules/metadata/metadata.module";
-import { MediaModule } from "src/modules/media/media.module";
-import { VNDBMetadataProviderService } from "./vndb.metadata-provider.service";
+  type GameVaultPluginModule,
+  type GameVaultPluginModuleMetadataV1,
+} from "../../../src/globals.js";
+import { MetadataModule } from "../../../src/modules/metadata/metadata.module.js";
+import { MediaModule } from "../../../src/modules/media/media.module.js";
+import { VNDBMetadataProviderService } from "./vndb.metadata-provider.service.js";
 
 @Module({
   imports: [MetadataModule, MediaModule],

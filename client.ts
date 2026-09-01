@@ -13,7 +13,7 @@ import {
   VisualNovelReleaseFields,
   type VNDBQueryResult,
   type VNDBQueryResultRaw
-} from "./models";
+} from "./models/index.js";
 
 /**
  * API Client to query VNDB API v2 (Kana) as RESTful API.

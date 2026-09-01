@@ -1,21 +1,21 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
-import { MetadataProvider } from "../../../src/modules/metadata/providers/abstract.metadata-provider.service";
-import { MinimalGameMetadataDto } from "../../../src/modules/metadata/games/minimal-game.metadata.dto";
-import { GameMetadata } from "../../../src/modules/metadata/games/game.metadata.entity";
-import { GenreMetadata } from "../../../src/modules/metadata/genres/genre.metadata.entity";
-import { TagMetadata } from "../../../src/modules/metadata/tags/tag.metadata.entity";
-import { VNDBClient } from "./client";
-import type { VisualNovel, VisualNovelRelease } from "./models";
-import configuration from "./configuration";
-import { GamevaultGame } from "src/modules/games/gamevault-game.entity";
+import { MetadataProvider } from "../../../src/modules/metadata/providers/abstract.metadata-provider.service.js";
+import type { MinimalGameMetadataDto } from "../../../src/modules/metadata/games/minimal-game.metadata.dto.js";
+import type { GameMetadata } from "../../../src/modules/metadata/games/game.metadata.entity.js";
+import type { GenreMetadata } from "../../../src/modules/metadata/genres/genre.metadata.entity.js";
+import type { TagMetadata } from "../../../src/modules/metadata/tags/tag.metadata.entity.js";
+import { VNDBClient } from "./client.js";
+import type { ExtLink, Image, Tag, VisualNovel, VisualNovelRelease } from "./models/index.js";
+import configuration from "./configuration.js";
+import type { GamevaultGame } from "../../../src/modules/games/gamevault-game.entity.js";
 
 @Injectable()
 export class VNDBMetadataProviderService extends MetadataProvider {
   enabled = configuration.ENABLED;
-  request_interval_ms = configuration.REQUEST_INTERVAL_MS;
+  request_interval_ms = configuration.REQUEST_INTERVAL_MS ?? 700;
   readonly slug = "vndb";
   readonly name = "VNDB";
-  readonly priority = configuration.PRIORITY;
+  readonly priority = configuration.PRIORITY ?? 5;
 
   public override async search(
     query: string
@@ -52,25 +52,23 @@ export class VNDBMetadataProviderService extends MetadataProvider {
   public override async getBestMatch(
     game: GamevaultGame
   ): Promise<MinimalGameMetadataDto> {
-    let result: MinimalGameMetadataDto;
+    let result: MinimalGameMetadataDto | undefined;
     const client = this.getClient();
     const titleRegex = new RegExp(/\[vndbid-(?<id>\d+)\]/);
-    const titleMatch = game.title.match(titleRegex);
-    if (titleMatch) {
-      const { id } = titleMatch.groups;
+    const titleMatch = (game.title ?? "").match(titleRegex);
+    if (titleMatch?.groups?.id) {
+      const id = titleMatch.groups.id;
       this.logger.debug(
         `Got ID ${id} from game titled ${game.title}. ` +
-        `Attempting to use ID based search.`
+          `Attempting to use ID based search.`
       );
       try {
-        result = this.mapMinimalGameMetadata(
-          await client.getVisualNovel(id)
-        );
+        result = this.mapMinimalGameMetadata(await client.getVisualNovel(id));
       } catch (e) {
         if (e instanceof NotFoundException) {
           this.logger.warn(
             `Unable to use ID based search: '${e.message}'. ` +
-            `Falling back to the default implementation.`
+              `Falling back to the default implementation.`
           );
         } else {
           throw e;
@@ -80,7 +78,7 @@ export class VNDBMetadataProviderService extends MetadataProvider {
     // Could alternatively use API search results as is and
     // not use super.getBestMatch here, as the API search also checks
     // for title aliases and thus may be better for matching in practice.
-    return result || await super.getBestMatch(game);
+    return result ?? (await super.getBestMatch(game));
   }
 
   private async mapGameMetadata(
@@ -113,12 +111,13 @@ export class VNDBMetadataProviderService extends MetadataProvider {
       provider_slug: this.slug,
       provider_data_id: game.id,
       provider_data_url: VNDBClient.makeBrowserURL(game.id),
-      url_screenshots: game.screenshots.map(image => image.url),
-      url_websites: [VNDBClient.makeBrowserURL(game.id)]
-        .concat(game.extlinks.map(link => link.url)),
+      url_screenshots: game.screenshots.map((image: Image) => image.url),
+      url_websites: [VNDBClient.makeBrowserURL(game.id)].concat(
+        game.extlinks.map((link: ExtLink) => link.url)
+      ),
       // E.g. Genres on VNDB count as tags too.
       // No filtering is done here, which shouldn't be too bad.
-      tags: game.tags.map(tag => ({
+      tags: game.tags.map((tag: Tag) => ({
         name: tag.name,
         provider_slug: this.slug,
         provider_data_id: tag.id
@@ -198,7 +197,7 @@ export class VNDBMetadataProviderService extends MetadataProvider {
 
   private getClient(): VNDBClient {
     return new VNDBClient({
-      delay: configuration.REQUEST_INTERVAL_MS,
+      delay: configuration.REQUEST_INTERVAL_MS ?? 700,
       languages: configuration.LANGUAGES
     });
   }

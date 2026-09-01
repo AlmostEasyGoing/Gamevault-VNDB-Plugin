@@ -1,11 +1,12 @@
-import { toLower } from "lodash";
+import lodash from "lodash";
+const { toLower } = lodash;
 
 // Copy from src/configuration.ts as this utility is not exported.
 function parseBooleanEnvVariable(
-  environmentVariable: string,
+  environmentVariable: string | undefined,
   defaultCase: boolean = false
 ): boolean {
-  switch (toLower(environmentVariable)) {
+  switch (toLower(environmentVariable ?? "")) {
     case "0":
     case "false":
     case "no":
@@ -25,7 +26,7 @@ function parseBooleanEnvVariable(
   }
 }
 function parseNumber(
-  environmentVariable: string,
+  environmentVariable: string | undefined,
   defaultValue?: number,
 ): number | undefined {
   const number = Number(environmentVariable);
@@ -35,7 +36,7 @@ function parseNumber(
   return number;
 }
 function parseList(
-  environmentVariable: string,
+  environmentVariable: string | undefined,
   defaultList: string[] = [],
 ): string[] {
   return environmentVariable

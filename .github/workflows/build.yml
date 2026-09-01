@@ -22,7 +22,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [20]
+        node-version: [lts/*]
 
     steps:
       # 1. Checkout my plugin repo.
@@ -44,11 +44,9 @@ jobs:
           mkdir -p gamevault-backend/.local/plugins
           cp -r vndb-plugin gamevault-backend/.local/plugins/vndb-plugin
 
-      # 4. Install pnpm.
+      # 4. Install pnpm (from the backend packageManager field).
       - name: Install pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: 10
 
       # 5. Setup Node + pnpm cache.
       - name: Setup Node ${{ matrix.node-version }}

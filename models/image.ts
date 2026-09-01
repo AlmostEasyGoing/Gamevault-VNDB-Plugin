@@ -1,4 +1,4 @@
-import { ID } from "./common";
+import type { ID } from "./common.js";
 
 export interface Image {
   id: ID;

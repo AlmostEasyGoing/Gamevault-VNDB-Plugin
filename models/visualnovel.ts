@@ -1,7 +1,7 @@
-import { type ID, extendFields } from "./common";
-import { type Tag, TagFields } from "./tag";
-import { type Image, ImageFields } from "./image";
-import { type ExtLink, ExtLinkFields } from "./extlink";
+import { type ID, extendFields } from "./common.js";
+import { type Tag, TagFields } from "./tag.js";
+import { type Image, ImageFields } from "./image.js";
+import { type ExtLink, ExtLinkFields } from "./extlink.js";
 
 export interface VisualNovel {
   id: ID;
